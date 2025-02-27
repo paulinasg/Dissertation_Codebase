@@ -76,16 +76,23 @@ def align_human_meshes_with_icp(mesh1_path: str, mesh2_path: str, decimate: bool
     mesh1 = trimesh.load(mesh1_path)
     mesh2 = trimesh.load(mesh2_path)
     
+    # Add diagnostic prints
+    print(f"\nMesh vertex counts before processing:")
+    print(f"Target mesh (mesh1): {len(mesh1.vertices):,} vertices")
+    print(f"Source mesh (mesh2): {len(mesh2.vertices):,} vertices")
+    
     init_scale, init_angles, init_trans = fast_initial_transform(mesh1, mesh2)
     R_init = Rotation.from_euler('xyz', init_angles).as_matrix()
     mesh2_transformed = init_scale * (mesh2.vertices @ R_init.T) + init_trans
     mesh2_transformed_mesh = trimesh.Trimesh(vertices=mesh2_transformed, faces=mesh2.faces)
     
-    # Explicitly enable orientation testing
+# Explicitly enable orientation testing
     aligned_mesh = rigid_icp(mesh2_transformed_mesh, mesh1, try_flipped=True)
     
     if decimate:
+        print(f"\nDecimating aligned mesh from {len(aligned_mesh.vertices):,} vertices to target {len(mesh1.vertices):,} vertices")
         aligned_mesh = fast_decimate(aligned_mesh, len(mesh1.vertices))
+        print(f"After decimation: {len(aligned_mesh.vertices):,} vertices")
     
     return aligned_mesh
 
