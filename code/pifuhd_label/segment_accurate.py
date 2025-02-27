@@ -26,12 +26,39 @@ def load_obj_with_colors_and_normals(file_path):
                 face = [int(p.split('/')[0]) - 1 for p in parts[1:]]
                 faces.append(face)
     
-    # Create trimesh object to compute normals
-    mesh = trimesh.Trimesh(vertices=vertices, faces=faces)
-    vertex_normals = mesh.vertex_normals
+    vertices_array = np.array(vertices)
+    colors_array = np.array(colors)
+    faces_array = np.array(faces)
     
-    print(f"Loaded mesh with {len(vertices)} vertices, {len(faces)} faces")
-    return np.array(vertices), np.array(colors), np.array(faces), vertex_normals
+    # Create trimesh object to compute normals
+    mesh = trimesh.Trimesh(vertices=vertices_array, faces=faces_array)
+    
+    # Initialize normals array with same size as vertices
+    vertex_normals = np.zeros_like(vertices_array)
+    
+    # Calculate face normals and average for vertices
+    face_normals = mesh.face_normals
+    vertex_face_count = np.zeros(len(vertices_array))
+    
+    # Sum up face normals for each vertex
+    for face_idx, face in enumerate(faces_array):
+        face_normal = face_normals[face_idx]
+        for vertex_idx in face:
+            vertex_normals[vertex_idx] += face_normal
+            vertex_face_count[vertex_idx] += 1
+    
+    # Average and normalize
+    for i in range(len(vertex_normals)):
+        if vertex_face_count[i] > 0:
+            vertex_normals[i] /= vertex_face_count[i]
+            norm = np.linalg.norm(vertex_normals[i])
+            if norm > 0:
+                vertex_normals[i] /= norm
+    
+    print(f"Loaded mesh with {len(vertices_array)} vertices, {len(faces_array)} faces")
+    print(f"Generated {len(vertex_normals)} vertex normals")
+    
+    return vertices_array, colors_array, faces_array, vertex_normals
 
 def save_colored_obj(file_path, vertices, colors, faces):
     """Save OBJ file with vertex colors."""
@@ -69,10 +96,24 @@ def get_extremity_weights(vertices):
     
     return enhanced_weights
 
-def transfer_colors_enhanced(source_vertices, source_colors, source_normals, 
-                           target_vertices, target_normals, k_base=8, k_max=32):
+def transfer_colors_enhanced(source_vertices, source_colors, source_normals, source_faces,
+                           target_vertices, target_normals, target_faces, k_base=8, k_max=32):
     """Transfer colors using position and normal information with adaptive k values."""
     print("Transferring colors with enhanced matching...")
+    
+    # Verify dimensions match before proceeding
+    print(f"Source shapes - Vertices: {source_vertices.shape}, Normals: {source_normals.shape}")
+    print(f"Target shapes - Vertices: {target_vertices.shape}, Normals: {target_normals.shape}")
+    
+    # Always regenerate normals for consistency
+    print("Regenerating normals for both meshes...")
+    source_mesh = trimesh.Trimesh(vertices=source_vertices, faces=source_faces)
+    source_normals = source_mesh.vertex_normals
+    
+    target_mesh = trimesh.Trimesh(vertices=target_vertices, faces=target_faces)
+    target_normals = target_mesh.vertex_normals
+    
+    print(f"After regeneration - Source normals: {source_normals.shape}, Target normals: {target_normals.shape}")
     
     # Get extremity weights
     extremity_weights = get_extremity_weights(target_vertices)
@@ -98,6 +139,7 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals,
     for i in range(len(target_vertices)):
         # Adaptive k based on extremity weight
         k = int(k_base + (k_max - k_base) * extremity_weights[i])
+        k = min(k, len(source_vertices) - 1)  # Make sure k isn't too large
         
         # Query k nearest neighbors
         distances, indices = tree.query(target_features[i], k=k)
@@ -109,12 +151,31 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals,
         # Additional normal-based weighting
         normal_dots = np.abs(np.dot(target_normals[i], source_normals[indices]))
         weights *= normal_dots
-        weights = weights / np.sum(weights)
+        weights = weights / (np.sum(weights) or 1.0)  # Avoid division by zero
         
         # Compute weighted color
         target_colors[i] = np.average(source_colors[indices], weights=weights, axis=0)
     
     return target_colors
+
+def find_dominant_colors(colors, n_clusters=6):
+    """Find dominant colors in the mesh using KMeans clustering."""
+    print("Finding dominant colors...")
+    
+    # Reshape colors to 2D array if needed
+    colors_2d = colors.reshape(-1, 3)
+    
+    # Use KMeans to find dominant colors
+    kmeans = KMeans(n_clusters=n_clusters, random_state=42, n_init=10)
+    kmeans.fit(colors_2d)
+    
+    # Get the cluster centers (dominant colors)
+    dominant_colors = kmeans.cluster_centers_
+    
+    # Get labels for each color
+    labels = kmeans.labels_
+    
+    return dominant_colors, labels
 
 def clean_colors(vertices, faces, colors, threshold=0.1):
     """Clean up colors by enforcing consistency within connected regions."""
@@ -185,8 +246,8 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
     # Transfer colors with enhanced matching
     print("\nTransferring colors...")
     target_colors = transfer_colors_enhanced(
-        source_vertices, source_colors, source_normals,
-        target_vertices, target_normals,
+        source_vertices, source_colors, source_normals, source_faces,
+        target_vertices, target_normals, target_faces,
         k_base=12,    # Increased base k
         k_max=48      # Much larger k for extremities
     )
@@ -208,9 +269,9 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
 
 
 if __name__ == "__main__":
-    source_obj = "/Users/paulinagerchuk/Downloads/Outer/Take9/Code/smpl_segmentation/colored_model_woman.obj"  # Your colored mesh
-    target_obj = "/Users/paulinagerchuk/Downloads/Outer/Take9/Code/aligned_result.obj"          # Mesh to be colored
-    output_obj = "woman_colored_pi.obj"  # Output path
+    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/4d_label/00122.obj"  # Your colored mesh
+    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/aligned_result_man.obj"          # Mesh to be colored
+    output_obj = "man_colored_pi.obj"  # Output path
     
     process_meshes(
         source_obj_path=source_obj,

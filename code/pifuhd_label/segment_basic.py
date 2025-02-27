@@ -185,8 +185,8 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
 
 # Usage
 if __name__ == "__main__":
-    source_obj = "/Users/paulinagerchuk/Downloads/Outer/Take9/Code/colored_model-f00011.obj"  # Your colored mesh
-    target_obj = "aligned_4ddress.obj"          # Mesh to be colored
-    output_obj = "colored_test.obj"  # Output path
+    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/4d_label/00122.obj"  # Your colored mesh
+    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/aligned_result_man.obj"  # Mesh to be colored
+    output_obj = "00122_test.obj"  # Output path
     
     process_meshes(source_obj, target_obj, output_obj)
