@@ -105,15 +105,26 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals, sou
     print(f"Source shapes - Vertices: {source_vertices.shape}, Normals: {source_normals.shape}")
     print(f"Target shapes - Vertices: {target_vertices.shape}, Normals: {target_normals.shape}")
     
-    # Always regenerate normals for consistency
+    # Regenerate normals but validate they match before using
     print("Regenerating normals for both meshes...")
     source_mesh = trimesh.Trimesh(vertices=source_vertices, faces=source_faces)
-    source_normals = source_mesh.vertex_normals
+    regenerated_source_normals = source_mesh.vertex_normals
     
     target_mesh = trimesh.Trimesh(vertices=target_vertices, faces=target_faces)
-    target_normals = target_mesh.vertex_normals
+    regenerated_target_normals = target_mesh.vertex_normals
     
-    print(f"After regeneration - Source normals: {source_normals.shape}, Target normals: {target_normals.shape}")
+    # Only use regenerated normals if they match the vertex count
+    if len(regenerated_source_normals) == len(source_vertices):
+        source_normals = regenerated_source_normals
+    else:
+        print(f"Warning: Regenerated source normals count ({len(regenerated_source_normals)}) doesn't match vertices count ({len(source_vertices)}). Using original normals.")
+    
+    if len(regenerated_target_normals) == len(target_vertices):
+        target_normals = regenerated_target_normals
+    else:
+        print(f"Warning: Regenerated target normals count ({len(regenerated_target_normals)}) doesn't match vertices count ({len(target_vertices)}). Using original normals.")
+    
+    print(f"After validation - Source normals: {source_normals.shape}, Target normals: {target_normals.shape}")
     
     # Get extremity weights
     extremity_weights = get_extremity_weights(target_vertices)
@@ -149,7 +160,9 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals, sou
         weights = weights / np.sum(weights)
         
         # Additional normal-based weighting
-        normal_dots = np.abs(np.dot(target_normals[i], source_normals[indices]))
+        # FIX: Replace dot product with element-wise calculation for batch processing
+        normal_dots = np.abs(np.sum(target_normals[i].reshape(1, 3) * source_normals[indices], axis=1))
+        
         weights *= normal_dots
         weights = weights / (np.sum(weights) or 1.0)  # Avoid division by zero
         
@@ -225,7 +238,7 @@ def smooth_colors(vertices, faces, colors, iterations=2):
             if len(neighbor_colors) > 0:
                 # Edge-preserving smoothing
                 color_diffs = np.linalg.norm(neighbor_colors - smoothed_colors[v], axis=1)
-                weights = np.exp(-color_diffs * 2)  # Gaussian weighting
+                weights = np.exp(-color_diffs * 2.5)  # Gaussian weighting
                 weights = weights / np.sum(weights)
                 new_colors[v] = np.average(neighbor_colors, weights=weights, axis=0)
         
@@ -269,9 +282,9 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
 
 
 if __name__ == "__main__":
-    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/4d_label/00122.obj"  # Your colored mesh
-    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/aligned_result_man.obj"          # Mesh to be colored
-    output_obj = "man_colored_pi.obj"  # Output path
+    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/4d_label/00163.obj"  # Your colored mesh
+    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/aligned_result_woman.obj"          # Mesh to be colored
+    output_obj = "00163_colored_acc.obj"  # Output path
     
     process_meshes(
         source_obj_path=source_obj,
