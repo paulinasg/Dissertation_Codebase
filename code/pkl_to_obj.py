@@ -29,8 +29,8 @@ def pkl_to_obj(pkl_data, obj_filename):
 # Assuming pkl_data is the dictionary you provided (the content of the pkl file)
 # Load your .pkl file first, e.g., using pickle.load
 import pickle
-with open('mesh-f00028.pkl', 'rb') as f:
+with open('/Users/paulinagerchuk/Downloads/dataset-segment-analyse/pkl_meshes/00134.pkl', 'rb') as f:
     pkl_data = pickle.load(f)
 
 # Convert to .obj
-pkl_to_obj(pkl_data, '4d-dress-woman.obj')
+pkl_to_obj(pkl_data, '00134.obj')

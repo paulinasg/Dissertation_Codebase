@@ -41,7 +41,7 @@ def convert_pkl_to_text(input_file, output_file):
 # Example usage
 if __name__ == "__main__":
     # Replace with the actual path to your pickle file
-    input_pickle_file = 'Semantic/labels/label-f00042.pkl'
+    input_pickle_file = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/pkl_meshes/00122.pkl'
     
     # Specify the desired output text file path
     output_text_file = 'label-f00042.txt'

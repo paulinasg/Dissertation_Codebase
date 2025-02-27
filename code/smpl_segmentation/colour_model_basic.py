@@ -1,9 +1,9 @@
 import pickle
 
 # Paths to files
-obj_file_path = "output.obj"
-labels_file_path = "Semantic/labels/label-f00011.pkl"
-output_obj_file_path = "colored_model-f00011.obj"
+obj_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/00134.obj"
+labels_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/label_files/00134.pkl"
+output_obj_file_path = "00134_test.obj"
 
 
 
