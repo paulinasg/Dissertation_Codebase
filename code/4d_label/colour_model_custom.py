@@ -3,8 +3,8 @@ import networkx as nx
 import numpy as np
 
 # Paths to files
-obj_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/00163.obj"
-labels_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/label_files/outer/00163.pkl"
+obj_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/00122.obj"
+labels_file_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/label_files/outer/00122.pkl"
 output_obj_file_path = obj_file_path[:-4] + ".obj"
 
 # Define a base color mapping for labels other than 0 (RGB format, values in [0, 1])

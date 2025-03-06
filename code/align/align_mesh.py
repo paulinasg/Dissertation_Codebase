@@ -236,10 +236,10 @@ def fast_initial_transform(mesh1, mesh2):
 
 def main():
     """Example usage."""
-    mesh1_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/00163.obj"
-    mesh2_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/00163.obj"
+    mesh1_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/00191.obj"
+    mesh2_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/00191.obj"
     aligned_mesh = align_human_meshes_with_icp(mesh1_path, mesh2_path, decimate=True)
-    aligned_mesh.export("aligned_result_woman.obj")
+    aligned_mesh.export("00191.obj")
 
 if __name__ == "__main__":
     main()
