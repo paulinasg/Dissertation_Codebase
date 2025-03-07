@@ -196,6 +196,49 @@ def main():
             body_part_results[part_name] = {'avg': avg_distance, 'std': std_distance}
             color_name = COLOR_NAMES.get(color, "Unknown")
             print(f"Average chamfer distance for {part_name} ({color_name}, RGB: {color}): {avg_distance:.6f} units, Std Dev: {std_distance:.6f} units")
+    
+    # Find models with min/max chamfer distances
+    print("\n----- MIN/MAX VALUES -----")
+    
+    # Overall min/max
+    min_overall = {'value': float('inf'), 'file': None}
+    max_overall = {'value': float('-inf'), 'file': None}
+    
+    for basename, results in all_results.items():
+        overall_value = results.get('overall', float('nan'))
+        if not (np.isnan(overall_value) or overall_value == float('inf') or overall_value == float('-inf')):
+            if overall_value < min_overall['value']:
+                min_overall['value'] = overall_value
+                min_overall['file'] = basename
+            if overall_value > max_overall['value']:
+                max_overall['value'] = overall_value
+                max_overall['file'] = basename
+    
+    if min_overall['file'] is not None:
+        print(f"Lowest overall chamfer distance: {min_overall['value']:.6f} units (Model: {min_overall['file']})")
+    if max_overall['file'] is not None:
+        print(f"Highest overall chamfer distance: {max_overall['value']:.6f} units (Model: {max_overall['file']})")
+    
+    # Body part min/max
+    for color, part_name in BODY_PART_LABELS.items():
+        min_part = {'value': float('inf'), 'file': None}
+        max_part = {'value': float('-inf'), 'file': None}
+        
+        for basename, results in all_results.items():
+            part_value = results.get(color, float('nan'))
+            if not (np.isnan(part_value) or part_value == float('inf') or part_value == float('-inf')):
+                if part_value < min_part['value']:
+                    min_part['value'] = part_value
+                    min_part['file'] = basename
+                if part_value > max_part['value']:
+                    max_part['value'] = part_value
+                    max_part['file'] = basename
+        
+        if min_part['file'] is not None and max_part['file'] is not None:
+            color_name = COLOR_NAMES.get(color, "Unknown")
+            print(f"{part_name} ({color_name}):")
+            print(f"  Lowest chamfer distance: {min_part['value']:.6f} units (Model: {min_part['file']})")
+            print(f"  Highest chamfer distance: {max_part['value']:.6f} units (Model: {max_part['file']})")
 
 if __name__ == "__main__":
     main()
