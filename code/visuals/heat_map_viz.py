@@ -138,16 +138,16 @@ def compute_mesh_distances(target_mesh, source_mesh):
     
     return np.array(distances)
 
-def visualize_distance_heatmap(target_mesh, source_mesh, cmap="coolwarm", clim=None, 
+def visualize_distance_heatmap(target_mesh, source_mesh, cmap="coolwarm", clim=[0, 0.05], 
                               show_edges=False, point_size=5, save_path=None):
     """
-    Visualize point-to-surface distances as a heatmap on the target mesh.
+    Visualize point-to-surface distances as a heatmap with fixed scale.
     
     Args:
         target_mesh: The mesh to visualize distances on
         source_mesh: The reference mesh
         cmap: Colormap for the heatmap
-        clim: Optional limits for the colormap [min, max]
+        clim: Fixed limits for the colormap [min, max], default [0, 0.1]
         show_edges: Whether to show mesh edges
         point_size: Size of points in visualization
         save_path: Path to save screenshot (optional)
@@ -158,30 +158,24 @@ def visualize_distance_heatmap(target_mesh, source_mesh, cmap="coolwarm", clim=N
     # Add distances as a scalar field to the target mesh
     target_mesh["distances"] = distances
     
-    # Determine colormap limits if not provided
-    if clim is None:
-        clim = [0, np.percentile(distances, 95)]  # Use 95th percentile to avoid outliers
-    
-    # Create a custom colormap that goes from bright blue to bright red
+    # Create a custom colormap with normalized scale
     custom_cmap = LinearSegmentedColormap.from_list(
-        "BrightBlueToRed", 
+        "FixedScale", 
         [
-            (0.0, '#00DDFF'),  # Bright cyan
-            (0.5, '#EEFF00'),  # Bright yellow
-            (1.0, '#FF0000')   # Bright red
+            (0.0, '#00DDFF'),    # Blue for minimum
+            (0.5, '#EEFF00'),    # Yellow for middle
+            (1.0, '#FF0000')     # Red for maximum
         ]
     )
     
-    # Create the visualization
+    # Create the visualization with fixed scale
     p = pv.Plotter()
-    p.add_mesh(target_mesh, scalars="distances", cmap=custom_cmap, clim=clim, 
+    p.add_mesh(target_mesh, scalars="distances", cmap=custom_cmap, 
+              clim=clim,  # This enforces the fixed scale
               show_edges=show_edges, point_size=point_size)
     
-    # Add a colorbar
-    p.add_scalar_bar(title="Distance", fmt="%.4f")
-    
-    # Optionally add wireframe of source mesh for reference
-    # p.add_mesh(source_mesh, color="gray", opacity=0.2, style="wireframe")
+    # Add a colorbar with fixed scale
+    p.add_scalar_bar(title="Chamfer Distance (m)", fmt="%.3f")
     
     # Show the plot
     p.show(screenshot=save_path)
@@ -232,8 +226,8 @@ def main(target_path, source_path, output_path=None):
 
 if __name__ == "__main__":
 
-    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00140.obj"
-    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00140.obj"
-    output = "00122.png"
+    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00137.obj"
+    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00137.obj"
+    output = "00137.png"
 
     main(target_mesh, source_mesh, output)

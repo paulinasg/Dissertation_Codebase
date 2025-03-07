@@ -14,6 +14,16 @@ BODY_PART_LABELS = {
     (1.0, 0.0, 0.0): "Head"
 }
 
+COLOR_NAMES = {
+    (0.0, 0.8, 0.8): "Cyan",
+    (1.0, 0.0, 1.0): "Magenta",
+    (0.0, 0.0, 1.0): "Blue",
+    (1.0, 1.0, 0.0): "Yellow", 
+    (1.0, 0.5, 0.0): "Orange",
+    (0.0, 1.0, 0.0): "Green",
+    (1.0, 0.0, 0.0): "Red"
+}
+
 # Define directories directly in the script
 SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files'
 NON_SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files'
@@ -78,7 +88,7 @@ def compute_point_to_surface_distance(points, mesh):
     
     # Calculate 95% distribution by removing 5% from far end
     lower_bound = np.percentile(distances, 0)
-    upper_bound = np.percentile(distances, 80)
+    upper_bound = np.percentile(distances, 100)
     
     # Filter distances to exclude outliers
     filtered_distances = distances[(distances >= lower_bound) & (distances <= upper_bound)]
@@ -165,6 +175,49 @@ def main():
             avg_distance = np.mean(valid_distances)
             body_part_results[part_name] = avg_distance
             print(f"Average point-to-surface distance for {part_name}: {avg_distance:.6f} units")
+
+    # Find models with min/max point-to-surface distances
+    print("\n----- MIN/MAX VALUES -----")
+    
+    # Overall min/max
+    min_overall = {'value': float('inf'), 'file': None}
+    max_overall = {'value': float('-inf'), 'file': None}
+    
+    for basename, results in all_results.items():
+        overall_value = results.get('overall', float('nan'))
+        if not (np.isnan(overall_value) or overall_value == float('inf') or overall_value == float('-inf')):
+            if overall_value < min_overall['value']:
+                min_overall['value'] = overall_value
+                min_overall['file'] = basename
+            if overall_value > max_overall['value']:
+                max_overall['value'] = overall_value
+                max_overall['file'] = basename
+    
+    if min_overall['file'] is not None:
+        print(f"Lowest overall point-to-surface distance: {min_overall['value']:.6f} units (Model: {min_overall['file']})")
+    if max_overall['file'] is not None:
+        print(f"Highest overall point-to-surface distance: {max_overall['value']:.6f} units (Model: {max_overall['file']})")
+    
+    # Body part min/max
+    for color, part_name in BODY_PART_LABELS.items():
+        min_part = {'value': float('inf'), 'file': None}
+        max_part = {'value': float('-inf'), 'file': None}
+        
+        for basename, results in all_results.items():
+            part_value = results.get(color, float('nan'))
+            if not (np.isnan(part_value) or part_value == float('inf') or part_value == float('-inf')):
+                if part_value < min_part['value']:
+                    min_part['value'] = part_value
+                    min_part['file'] = basename
+                if part_value > max_part['value']:
+                    max_part['value'] = part_value
+                    max_part['file'] = basename
+        
+        if min_part['file'] is not None and max_part['file'] is not None:
+            color_name = COLOR_NAMES.get(color, "Unknown")
+            print(f"{part_name} ({color_name}):")
+            print(f"  Lowest point-to-surface distance: {min_part['value']:.6f} units (Model: {min_part['file']})")
+            print(f"  Highest point-to-surface distance: {max_part['value']:.6f} units (Model: {max_part['file']})")
 
 if __name__ == "__main__":
     main()
