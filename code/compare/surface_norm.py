@@ -2,6 +2,7 @@ import os
 import numpy as np
 import trimesh
 from tqdm import tqdm
+import trimesh.proximity
 
 # Body part color mappings
 BODY_PART_LABELS = {
@@ -139,27 +140,35 @@ def compute_face_normals(vertices, faces):
     
     return normalized_normals
 
-def compute_normal_consistency(normals1, normals2):
+def compute_normal_consistency(vertices1, faces1, normals1, vertices2, faces2, normals2):
     """
-    Compute normal consistency between two sets of normals
-    Returns average cosine similarity (1 is perfect alignment, -1 is opposite)
+    Compute normal consistency between two sets of normals using spatial correspondence
+    with tolerance for flipped normals
     """
     if len(normals1) == 0 or len(normals2) == 0:
         return 0.0
     
+    # Convert to trimesh for faster proximity queries
+    mesh2 = trimesh.Trimesh(vertices=vertices2, faces=faces2, process=False)
+    
+    # Calculate face centers for the first mesh
+    face_centers1 = compute_face_centers(vertices1, faces1)
+    
+    # For each face center in mesh1, find closest point on mesh2
+    closest_points, _, triangle_ids = trimesh.proximity.closest_point(mesh2, face_centers1)
+    
+    # Get normals for the closest triangles
+    closest_normals = normals2[triangle_ids]
+    
     # Normalize all normals (ensure unit length)
     n1 = normals1 / np.maximum(np.linalg.norm(normals1, axis=1, keepdims=True), 1e-10)
-    n2 = normals2 / np.maximum(np.linalg.norm(normals2, axis=1, keepdims=True), 1e-10)
+    n2 = closest_normals / np.maximum(np.linalg.norm(closest_normals, axis=1, keepdims=True), 1e-10)
     
-    # For each normal in n1, find closest normal in n2
-    closest_dot_products = []
-    for normal in n1:
-        # Compute dot products between this normal and all normals in n2
-        dot_products = np.abs(np.dot(n2, normal))
-        closest_dot_products.append(np.max(dot_products))
+    # Compute absolute dot products (treating flipped normals as similar)
+    dot_products = np.abs(np.sum(n1 * n2, axis=1))
     
     # Average the cosine similarities
-    mean_consistency = np.mean(closest_dot_products)
+    mean_consistency = np.mean(dot_products)
     return mean_consistency
 
 def process_file_pair(segmented_file, non_segmented_file):
@@ -168,7 +177,6 @@ def process_file_pair(segmented_file, non_segmented_file):
     """
     # Load segmented mesh with face groups
     seg_vertices, seg_faces, seg_face_groups = load_obj_with_face_groups(segmented_file)
-    seg_mesh = trimesh.Trimesh(vertices=seg_vertices, faces=seg_faces)
     seg_face_normals = compute_face_normals(seg_vertices, seg_faces)
     
     # Load non-segmented mesh
@@ -176,7 +184,6 @@ def process_file_pair(segmented_file, non_segmented_file):
     non_seg_vertices = np.array(non_seg_mesh.vertices)
     non_seg_faces = np.array(non_seg_mesh.faces)
     non_seg_face_normals = compute_face_normals(non_seg_vertices, non_seg_faces)
-    non_seg_face_centers = compute_face_centers(non_seg_vertices, non_seg_faces)
     
     # Print only the filename
     print(f"\n{os.path.basename(segmented_file)}")
@@ -188,34 +195,34 @@ def process_file_pair(segmented_file, non_segmented_file):
         if color in BODY_PART_LABELS:
             part_name = BODY_PART_LABELS[color]
             
-            # Get part vertices from faces
-            part_vertices = seg_vertices[np.unique(seg_faces[face_indices].flatten())]
+            # Get part vertices and faces
+            part_faces = seg_faces[face_indices]
+            unique_vertices = np.unique(part_faces.flatten())
+            part_vertices = seg_vertices[unique_vertices]
             
-            # Compute bounding box for this part
-            bbox_min, bbox_max = compute_bounding_box(part_vertices)
+            # Reindex faces for this part only
+            vertex_map = {old_idx: new_idx for new_idx, old_idx in enumerate(unique_vertices)}
+            remapped_faces = np.array([[vertex_map[v] for v in face] for face in part_faces])
             
-            # Filter non-segmented faces to those within the bounding box
-            filtered_face_indices = filter_faces_in_bbox(non_seg_face_centers, bbox_min, bbox_max)
-            
-            # Skip if no faces in bounding box
-            if len(filtered_face_indices) == 0:
-                print(f"{part_name}: No corresponding faces found in non-segmented model")
-                continue
-            
-            # Get normals for part and corresponding region
+            # Get normals for this part
             part_normals = seg_face_normals[face_indices]
-            corresponding_normals = non_seg_face_normals[filtered_face_indices]
             
-            # Compute normal consistency
-            consistency = compute_normal_consistency(part_normals, corresponding_normals)
+            # Compute normal consistency using spatial correspondence
+            consistency = compute_normal_consistency(
+                part_vertices, remapped_faces, part_normals,
+                non_seg_vertices, non_seg_faces, non_seg_face_normals
+            )
+            
             results[color] = consistency
             
-            print(f"{part_name}: {len(part_normals)} faces, {len(corresponding_normals)} faces in bbox, "
+            print(f"{part_name}: {len(part_normals)} faces, "
                   f"Normal consistency: {consistency:.4f} (1.0 is perfect)")
     
     # Calculate overall normal consistency
-    all_seg_normals = seg_face_normals
-    overall_consistency = compute_normal_consistency(all_seg_normals, non_seg_face_normals)
+    overall_consistency = compute_normal_consistency(
+        seg_vertices, seg_faces, seg_face_normals,
+        non_seg_vertices, non_seg_faces, non_seg_face_normals
+    )
     results['overall'] = overall_consistency
     
     print(f"Overall shape normal consistency: {overall_consistency:.4f} (1.0 is perfect)")
@@ -250,14 +257,16 @@ def main():
     print("\n----- SUMMARY -----")
     print(f"Processed {len(all_results)} file pairs successfully")
     
-    # Calculate overall average first
+    # Calculate overall statistics
     overall_consistencies = [results.get('overall', float('nan')) for results in all_results.values()]
     valid_overall = [c for c in overall_consistencies if not np.isnan(c)]
     if valid_overall:
         avg_overall = np.mean(valid_overall)
-        print(f"Average overall normal consistency: {avg_overall:.4f} (1.0 is perfect)")
+        std_overall = np.std(valid_overall)
+        print(f"Overall normal consistency: mean={avg_overall:.4f}, std={std_overall:.4f} (1.0 is perfect)")
     
     # Aggregate results by body part
+    print("\n----- BODY PART STATISTICS -----")
     body_part_results = {}
     for color, part_name in BODY_PART_LABELS.items():
         consistencies = [results.get(color, float('nan')) for results in all_results.values()]
@@ -265,9 +274,53 @@ def main():
         
         if valid_consistencies:
             avg_consistency = np.mean(valid_consistencies)
+            std_consistency = np.std(valid_consistencies)
             body_part_results[part_name] = avg_consistency
             color_name = COLOR_NAMES.get(color, "Unknown")
-            print(f"Average normal consistency for {part_name} ({color_name}): {avg_consistency:.4f}")
+            print(f"{part_name} ({color_name}): mean={avg_consistency:.4f}, std={std_consistency:.4f}")
+
+    # Find models with min/max normal consistency
+    print("\n----- MIN/MAX VALUES -----")
+    
+    # Overall min/max
+    min_overall = {'value': float('inf'), 'file': None}
+    max_overall = {'value': float('-inf'), 'file': None}
+    
+    for basename, results in all_results.items():
+        overall_value = results.get('overall', float('nan'))
+        if not (np.isnan(overall_value) or overall_value == float('inf') or overall_value == float('-inf')):
+            if overall_value < min_overall['value']:
+                min_overall['value'] = overall_value
+                min_overall['file'] = basename
+            if overall_value > max_overall['value']:
+                max_overall['value'] = overall_value
+                max_overall['file'] = basename
+    
+    if min_overall['file'] is not None:
+        print(f"Lowest overall normal consistency: {min_overall['value']:.4f} (Model: {min_overall['file']})")
+    if max_overall['file'] is not None:
+        print(f"Highest overall normal consistency: {max_overall['value']:.4f} (Model: {max_overall['file']})")
+    
+    # Body part min/max
+    for color, part_name in BODY_PART_LABELS.items():
+        min_part = {'value': float('inf'), 'file': None}
+        max_part = {'value': float('-inf'), 'file': None}
+        
+        for basename, results in all_results.items():
+            part_value = results.get(color, float('nan'))
+            if not (np.isnan(part_value) or part_value == float('inf') or part_value == float('-inf')):
+                if part_value < min_part['value']:
+                    min_part['value'] = part_value
+                    min_part['file'] = basename
+                if part_value > max_part['value']:
+                    max_part['value'] = part_value
+                    max_part['file'] = basename
+        
+        if min_part['file'] is not None and max_part['file'] is not None:
+            color_name = COLOR_NAMES.get(color, "Unknown")
+            print(f"{part_name} ({color_name}):")
+            print(f"  Lowest normal consistency: {min_part['value']:.4f} (Model: {min_part['file']})")
+            print(f"  Highest normal consistency: {max_part['value']:.4f} (Model: {max_part['file']})")
 
 if __name__ == "__main__":
     main()

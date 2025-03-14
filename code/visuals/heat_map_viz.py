@@ -138,7 +138,7 @@ def compute_mesh_distances(target_mesh, source_mesh):
     
     return np.array(distances)
 
-def visualize_distance_heatmap(target_mesh, source_mesh, cmap="coolwarm", clim=[0, 0.05], 
+def visualize_distance_heatmap(target_mesh, source_mesh, cmap="coolwarm", clim=[0, 0.07], 
                               show_edges=False, point_size=5, save_path=None):
     """
     Visualize point-to-surface distances as a heatmap with fixed scale.
@@ -226,8 +226,8 @@ def main(target_path, source_path, output_path=None):
 
 if __name__ == "__main__":
 
-    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00137.obj"
-    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00137.obj"
+    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00170.obj"
+    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00170.obj"
     output = "00137.png"
 
     main(target_mesh, source_mesh, output)
