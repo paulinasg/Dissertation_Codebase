@@ -101,70 +101,22 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals, sou
     """Transfer colors using position and normal information with adaptive k values."""
     print("Transferring colors with enhanced matching...")
     
-    # Verify dimensions match before proceeding
-    print(f"Source shapes - Vertices: {source_vertices.shape}, Normals: {source_normals.shape}")
-    print(f"Target shapes - Vertices: {target_vertices.shape}, Normals: {target_normals.shape}")
-    
-    # Regenerate normals but validate they match before using
-    print("Regenerating normals for both meshes...")
-    source_mesh = trimesh.Trimesh(vertices=source_vertices, faces=source_faces)
-    regenerated_source_normals = source_mesh.vertex_normals
-    
-    target_mesh = trimesh.Trimesh(vertices=target_vertices, faces=target_faces)
-    regenerated_target_normals = target_mesh.vertex_normals
-    
-    # Only use regenerated normals if they match the vertex count
-    if len(regenerated_source_normals) == len(source_vertices):
-        source_normals = regenerated_source_normals
-    else:
-        print(f"Warning: Regenerated source normals count ({len(regenerated_source_normals)}) doesn't match vertices count ({len(source_vertices)}). Using original normals.")
-    
-    if len(regenerated_target_normals) == len(target_vertices):
-        target_normals = regenerated_target_normals
-    else:
-        print(f"Warning: Regenerated target normals count ({len(regenerated_target_normals)}) doesn't match vertices count ({len(target_vertices)}). Using original normals.")
-    
-    print(f"After validation - Source normals: {source_normals.shape}, Target normals: {target_normals.shape}")
-    
-    # Get extremity weights
-    extremity_weights = get_extremity_weights(target_vertices)
-    
-    # Build KD-tree for source vertices
-    # Combine position and normal information
-    source_features = np.concatenate([
-        source_vertices,
-        source_normals * 0.5  # Scale normals to balance their influence
-    ], axis=1)
-    
-    target_features = np.concatenate([
-        target_vertices,
-        target_normals * 0.5
-    ], axis=1)
-    
-    tree = cKDTree(source_features)
-    
-    # Initialize output colors
+    # Skip normal checking and just use position-based matching for reliability
+    print("Using position-only matching for reliability...")
+    position_tree = cKDTree(source_vertices)
     target_colors = np.zeros((len(target_vertices), 3))
     
     # Process each vertex with adaptive k value
     for i in range(len(target_vertices)):
-        # Adaptive k based on extremity weight
-        k = int(k_base + (k_max - k_base) * extremity_weights[i])
-        k = min(k, len(source_vertices) - 1)  # Make sure k isn't too large
+        # Use simpler adaptive k value calculation
+        k = min(k_max, len(source_vertices) - 1)  # Make sure k isn't too large
         
         # Query k nearest neighbors
-        distances, indices = tree.query(target_features[i], k=k)
+        distances, indices = position_tree.query(target_vertices[i], k=k)
         
-        # Enhanced inverse distance weighting
-        weights = 1.0 / (distances**3 + 1e-6)  # Cubic falloff for sharper transitions
+        # Simple inverse distance weighting
+        weights = 1.0 / (distances**2 + 1e-6)
         weights = weights / np.sum(weights)
-        
-        # Additional normal-based weighting
-        # FIX: Replace dot product with element-wise calculation for batch processing
-        normal_dots = np.abs(np.sum(target_normals[i].reshape(1, 3) * source_normals[indices], axis=1))
-        
-        weights *= normal_dots
-        weights = weights / (np.sum(weights) or 1.0)  # Avoid division by zero
         
         # Compute weighted color
         target_colors[i] = np.average(source_colors[indices], weights=weights, axis=0)
@@ -261,8 +213,8 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
     target_colors = transfer_colors_enhanced(
         source_vertices, source_colors, source_normals, source_faces,
         target_vertices, target_normals, target_faces,
-        k_base=12,    # Increased base k
-        k_max=48      # Much larger k for extremities
+        k_base=16,    # Increased base k
+        k_max=64      # Much larger k for extremities
     )
     
     # Clean up colors
@@ -277,14 +229,24 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
     print("\nSaving colored mesh...")
     save_colored_obj(output_path, target_vertices, final_colors, target_faces)
     
+    # Optionally save an alternative version with double-sided faces
+    double_sided_output = output_path.replace(".obj", "_double_sided.obj")
+    print(f"\nSaving double-sided version to: {double_sided_output}")
+    
+    # Create double-sided mesh by duplicating faces with flipped normals
+    double_sided_faces = np.vstack([
+        target_faces,
+        np.fliplr(target_faces)  # Flip the order of vertices in each face
+    ])
+    
+    save_colored_obj(double_sided_output, target_vertices, final_colors, double_sided_faces)
+    
     print("\nProcess completed!")
 
-
-
 if __name__ == "__main__":
-    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/4d_label/00163.obj"  # Your colored mesh
-    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/aligned_result_woman.obj"          # Mesh to be colored
-    output_obj = "00163_colored_acc.obj"  # Output path
+    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner/00123.obj"  # Your colored mesh
+    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner/00123.obj"          # Mesh to be colored
+    output_obj = "00123_colored_robust.obj"  # Output path
     
     process_meshes(
         source_obj_path=source_obj,

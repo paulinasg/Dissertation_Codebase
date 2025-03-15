@@ -129,19 +129,42 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals, sou
     
     print(f"After validation - Source normals: {source_normals.shape}, Target normals: {target_normals.shape}")
     
+    # Check for potential flipped normals
+    # Sample some points and check normal alignment
+    sample_size = min(1000, len(source_vertices))
+    sample_indices = np.random.choice(len(source_vertices), sample_size, replace=False)
+    source_sample_normals = source_normals[sample_indices]
+    target_sample_normals = np.zeros_like(source_sample_normals)
+    
+    # Find closest target vertices to sample source vertices
+    tree_pos_only = cKDTree(target_vertices)
+    _, closest_indices = tree_pos_only.query(source_vertices[sample_indices])
+    target_sample_normals = target_normals[closest_indices]
+    
+    # Calculate average dot product to see if normals are generally aligned
+    dot_products = np.sum(source_sample_normals * target_sample_normals, axis=1)
+    avg_dot_product = np.mean(dot_products)
+    
+    # If average dot product is negative, normals are likely flipped
+    normals_are_flipped = avg_dot_product < 0
+    if normals_are_flipped:
+        print("Detected flipped normals! Flipping target normals...")
+        target_normals = -target_normals
+    
     # Get extremity weights
     extremity_weights = get_extremity_weights(target_vertices)
     
     # Build KD-tree for source vertices
-    # Combine position and normal information
+    # Combine position and normal information, with reduced normal influence
+    normal_weight = 0.25  # Reduced from 0.5 to make less sensitive to normal direction
     source_features = np.concatenate([
         source_vertices,
-        source_normals * 0.5  # Scale normals to balance their influence
+        source_normals * normal_weight
     ], axis=1)
     
     target_features = np.concatenate([
         target_vertices,
-        target_normals * 0.5
+        target_normals * normal_weight
     ], axis=1)
     
     tree = cKDTree(source_features)
@@ -158,15 +181,15 @@ def transfer_colors_enhanced(source_vertices, source_colors, source_normals, sou
         # Query k nearest neighbors
         distances, indices = tree.query(target_features[i], k=k)
         
-        # Enhanced inverse distance weighting
-        weights = 1.0 / (distances**3 + 1e-6)  # Cubic falloff for sharper transitions
+        # Enhanced inverse distance weighting with safeguards
+        weights = 1.0 / (distances**2 + 1e-6)  # Reduced from cubic to squared for smoother falloff
         weights = weights / np.sum(weights)
         
-        # Additional normal-based weighting
-        # FIX: Replace dot product with element-wise calculation for batch processing
+        # Additional normal-based weighting using absolute value to handle flipped normals
         normal_dots = np.abs(np.sum(target_normals[i].reshape(1, 3) * source_normals[indices], axis=1))
         
-        weights *= normal_dots
+        # Apply normal weighting with a safety floor to prevent zero weights
+        weights = weights * (normal_dots + 0.2)  # Add 0.2 to prevent zero weights
         weights = weights / (np.sum(weights) or 1.0)  # Avoid division by zero
         
         # Compute weighted color
@@ -325,11 +348,11 @@ def process_directory_pairs(source_dir, target_dir, output_dir):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Transfer colors between pairs of meshes")
-    parser.add_argument("--source_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files",
+    parser.add_argument("--source_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner",
                         help="Directory containing source (colored) mesh files")
-    parser.add_argument("--target_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files",
+    parser.add_argument("--target_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner",
                         help="Directory containing target mesh files to be colored")
-    parser.add_argument("--output_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/obj_pifuhd_labelled_files",
+    parser.add_argument("--output_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_labelled_files/inner",
                         help="Directory where colored output files will be saved")
     
     args = parser.parse_args()
