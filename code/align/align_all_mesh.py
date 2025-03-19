@@ -239,11 +239,11 @@ def main():
     import glob
     
     # Define directories
-    address_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files"
-    pifuhd_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files"
+    address_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner"
+    pifuhd_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/inner"
     
     # Define new directory for aligned meshes
-    aligned_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files"
+    aligned_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner"
     
     # Create the aligned directory if it doesn't exist
     os.makedirs(aligned_dir, exist_ok=True)

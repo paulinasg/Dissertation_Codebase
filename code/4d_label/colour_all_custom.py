@@ -154,11 +154,11 @@ def color_model(obj_file_path, labels_file_path, output_obj_file_path):
 def main():
     """Process all matching model pairs between obj_4ddress_files and label_files/outer directories."""
     # Define directories
-    obj_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files"
-    labels_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/label_files/outer"
+    obj_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner"
+    labels_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/label_files/inner"
     
     # Create output directory for colored models
-    output_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files"
+    output_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner"
     os.makedirs(output_dir, exist_ok=True)
     print(f"Colored models will be saved to: {output_dir}")
     

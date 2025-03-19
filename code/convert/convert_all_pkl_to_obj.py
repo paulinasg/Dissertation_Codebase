@@ -33,6 +33,6 @@ def convert_all_pkl_to_obj(input_folder, output_folder):
     print(f"\nConversion complete. Successfully converted: {successful}, Failed: {failed}")
 
 # Example usage:
-input_folder = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/pkl_meshes'
-output_folder = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files'
+input_folder = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/pkl_meshes/inner'
+output_folder = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner'
 convert_all_pkl_to_obj(input_folder, output_folder)
