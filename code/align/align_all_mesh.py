@@ -240,7 +240,7 @@ def main():
     
     # Define directories
     address_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner"
-    pifuhd_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/inner"
+    pifuhd_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_files/inner/bonus"
     
     # Define new directory for aligned meshes
     aligned_dir = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner"

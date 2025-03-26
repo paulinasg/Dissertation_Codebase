@@ -280,7 +280,7 @@ def save_results_to_csv(all_results):
     os.makedirs(output_dir, exist_ok=True)
     
     # CSV for detailed per-model, per-part results
-    detailed_csv_path = os.path.join(output_dir, "detailed_distance_measurements.csv")
+    detailed_csv_path = os.path.join(output_dir, "detailed_distance_measurements_inner.csv")
     with open(detailed_csv_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['model_id', 'body_part', 'color', 'min', 'max', 'mean', 'median', 'std_dev', 'vertex_count'])
@@ -322,7 +322,7 @@ def save_results_to_csv(all_results):
                 ])
     
     # CSV for aggregate statistics by body part
-    aggregate_csv_path = os.path.join(output_dir, "aggregate_body_part_statistics.csv")
+    aggregate_csv_path = os.path.join(output_dir, "aggregate_body_part_statistics_inner.csv")
     with open(aggregate_csv_path, 'w', newline='') as csvfile:
         writer = csv.writer(csvfile)
         writer.writerow(['body_part', 'avg_mean', 'avg_median', 'avg_std_dev', 'std_of_means', 'min_model', 'min_value', 'max_model', 'max_value'])

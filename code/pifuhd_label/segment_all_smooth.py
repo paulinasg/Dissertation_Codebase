@@ -350,7 +350,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Transfer colors between pairs of meshes")
     parser.add_argument("--source_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner",
                         help="Directory containing source (colored) mesh files")
-    parser.add_argument("--target_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner",
+    parser.add_argument("--target_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner/bonus",
                         help="Directory containing target mesh files to be colored")
     parser.add_argument("--output_dir", default="/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_labelled_files/inner",
                         help="Directory where colored output files will be saved")
