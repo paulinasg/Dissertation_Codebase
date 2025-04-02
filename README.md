@@ -9,15 +9,18 @@ Contains scripts and programs for processing, manipulating, and analysing the da
   - Contains custom and default color models
   - Includes label fixes and adjustments
 
-- **`align/`**: Alignment tools and scripts for model alignment between 4D-DRESS ground truths and PIFuHD results
+- **`align/`**: Scripts for model alignment between 4D-DRESS ground truths and PIFuHD results
 
-- **`compare/`**: Comparison utilities for analysing accuracies of models using different methods
+- **`compare/`**: Comparison utilities for analysing accuracies of models
+  - Chamfer Distance
+  - Point-to-Surface Distance
+  - Surface Normal Comparison
 
 - **`convert/`**: Conversion between .pkl compressed, .txt, and .obj model formats
 
-- **`pifuhd_label/`**: Labeling scripts for segmentation transfer onto PIFuHD models
+- **`pifuhd_label/`**: Labelling scripts for segmentation transfer onto PIFuHD models
 
-- **`user_study/`**: Resources and code related to analysisng the user study
+- **`user_study/`**: Python Notebook code for analysing the user study
 
 - **`visuals/`**: Visualisation tools and scripts for generating graphs and graphics
 
