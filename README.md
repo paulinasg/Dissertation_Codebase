@@ -24,6 +24,14 @@ Contains scripts and programs for processing, manipulating, and analysing the da
 
 - **`visuals/`**: Visualisation tools and scripts for generating graphs and graphics
 
+### `obj_4ddress_labelled_files/`
+Labelled 4D-Dress model files.
+
+### `obj_pifuhd_labelled_files/`
+Labelled PIFuHD model files.
+
+## These files have been removed to decrease folder size, they are available upon request
+
 ### `images/`
 Storage for source 4D-DRESS images.
 
@@ -33,17 +41,11 @@ Contains label data for the 4D-DRESS dataset scans.
 ### `obj_4ddress_files/`
 4D-Dress model files in OBJ format.
 
-### `obj_4ddress_labelled_files/`
-Labelled 4D-Dress model files.
-
 ### `obj_pifuhd_aligned_files/`
 Aligned PIFuHD model files.
 
 ### `obj_pifuhd_files/`
 Original PIFuHD model files.
-
-### `obj_pifuhd_labelled_files/`
-Labelled PIFuHD model files.
 
 ### `pkl_meshes/`
 Raw 4D-DRESS mesh data stored in pickle format.
