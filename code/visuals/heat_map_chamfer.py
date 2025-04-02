@@ -214,12 +214,12 @@ def main(target_path=None, source_path=None, output_path=None):
     # Default paths if not provided
     if target_path is None:
         # Specify your default target mesh path here
-        target_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00170.obj"
+        target_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner/00129.obj"
         print(f"Using default target mesh: {target_path}")
     
     if source_path is None:
         # Specify your default source mesh path here
-        source_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00170.obj"
+        source_path = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner/00129.obj"
         print(f"Using default source mesh: {source_path}")
     
     print(f"Loading meshes...")

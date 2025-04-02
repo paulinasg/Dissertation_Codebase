@@ -327,8 +327,8 @@ def main(target_path, source_path, output_path=None):
 
 if __name__ == "__main__":
 
-    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/00122.obj"
-    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/outer/00122.obj"
-    output = "00122.png"
+    target_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner/00129.obj"
+    source_mesh = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_files/inner/00129.obj"
+    output = "00129.png"
 
     main(target_mesh, source_mesh, output)

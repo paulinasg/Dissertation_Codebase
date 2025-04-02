@@ -244,9 +244,9 @@ def process_meshes(source_obj_path, target_obj_path, output_path):
     print("\nProcess completed!")
 
 if __name__ == "__main__":
-    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner/00176.obj"  # Your colored mesh
-    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/code/align/00176.obj"          # Mesh to be colored
-    output_obj = "00176.obj"  # Output path
+    source_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner/00122.obj"  # Your colored mesh
+    target_obj = "/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner/00122.obj"          # Mesh to be colored
+    output_obj = "00122.obj"  # Output path
     
     process_meshes(
         source_obj_path=source_obj,

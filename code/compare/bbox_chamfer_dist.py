@@ -27,8 +27,8 @@ COLOR_NAMES = {
 }
 
 # Define directories directly in the script
-SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files/inner'
-NON_SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files/inner'
+SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_4ddress_labelled_files'
+NON_SEGMENTED_DIR = '/Users/paulinagerchuk/Downloads/dataset-segment-analyse/obj_pifuhd_aligned_files'
 
 def extract_labeled_parts(file_path):
     """
@@ -149,22 +149,48 @@ def process_file_pair(segmented_file, non_segmented_file):
     return results
 
 def main():
-    # Get list of files in both directories
-    segmented_files = [f for f in os.listdir(SEGMENTED_DIR) if f.endswith('.obj')]
-    non_segmented_files = [f for f in os.listdir(NON_SEGMENTED_DIR) if f.endswith('.obj')]
+    # Find all .obj files in both directory trees (including subfolders)
+    segmented_files = []
+    for root, _, files in os.walk(SEGMENTED_DIR):
+        for file in files:
+            if file.endswith('.obj'):
+                # Store the full path
+                segmented_files.append(os.path.join(root, file))
     
-    # Find common file names
-    seg_basenames = {os.path.splitext(f)[0] for f in segmented_files}
-    non_seg_basenames = {os.path.splitext(f)[0] for f in non_segmented_files}
-    common_basenames = seg_basenames.intersection(non_seg_basenames)
+    non_segmented_files = []
+    for root, _, files in os.walk(NON_SEGMENTED_DIR):
+        for file in files:
+            if file.endswith('.obj'):
+                # Store the full path
+                non_segmented_files.append(os.path.join(root, file))
+    
+    # Extract basenames (including directories after the main directory)
+    seg_basenames = {}
+    for path in segmented_files:
+        # Get the relative path from the base directory
+        rel_path = os.path.relpath(path, SEGMENTED_DIR)
+        # Remove .obj extension
+        basename = os.path.splitext(rel_path)[0]
+        seg_basenames[basename] = path
+    
+    non_seg_basenames = {}
+    for path in non_segmented_files:
+        # Get the relative path from the base directory
+        rel_path = os.path.relpath(path, NON_SEGMENTED_DIR)
+        # Remove .obj extension
+        basename = os.path.splitext(rel_path)[0]
+        non_seg_basenames[basename] = path
+    
+    # Find common basenames
+    common_basenames = set(seg_basenames.keys()).intersection(set(non_seg_basenames.keys()))
     
     print(f"Found {len(common_basenames)} matching file pairs")
     
     # Process each file pair
     all_results = {}
     for basename in tqdm(common_basenames):
-        segmented_file = os.path.join(SEGMENTED_DIR, f"{basename}.obj")
-        non_segmented_file = os.path.join(NON_SEGMENTED_DIR, f"{basename}.obj")
+        segmented_file = seg_basenames[basename]
+        non_segmented_file = non_seg_basenames[basename]
         
         try:
             results = process_file_pair(segmented_file, non_segmented_file)
