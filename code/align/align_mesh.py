@@ -149,7 +149,6 @@ def get_facing_direction(vertices, center):
     center_xz[1] = 0
     
     # Method 1: Use point density distribution
-    # Split the space into front/back hemispheres and compare point counts
     directions = points_xz - center_xz
     directions_normalized = directions / (np.linalg.norm(directions, axis=1, keepdims=True) + 1e-10)
     
@@ -162,7 +161,6 @@ def get_facing_direction(vertices, center):
     densest_sector = sectors[np.argmax(counts)]
     
     # Method 2: Use asymmetry of the shape
-    # Calculate the center of mass for the front half and back half
     front_mask = angles >= 0
     back_mask = ~front_mask
     if np.sum(front_mask) > 0 and np.sum(back_mask) > 0:
@@ -216,19 +214,15 @@ def fast_initial_transform(mesh1, mesh2):
     rot1 = Rotation.from_euler('xyz', R1).as_matrix()
     rot2 = Rotation.from_euler('xyz', R2).as_matrix()
     
-    # Modify subset_idx generation to ensure indices do not exceed number of vertices
     num_vertices = len(mesh1.vertices)
     subset_idx = np.linspace(0, num_vertices - 1, 100, endpoint=False, dtype=int)
     
-    # Transform a subset of points for quick comparison
     points1 = scale * (mesh2.vertices[subset_idx] @ rot1.T) + translation
     points2 = scale * (mesh2.vertices[subset_idx] @ rot2.T) + translation
     
-    # Compare distances to target points
     dist1 = np.mean(np.linalg.norm(points1 - mesh1.vertices[subset_idx], axis=1))
     dist2 = np.mean(np.linalg.norm(points2 - mesh1.vertices[subset_idx], axis=1))
     
-    # Choose the better rotation
     R = R1 if dist1 < dist2 else R2
     
     return scale, R, translation

@@ -5,9 +5,7 @@ import os
 import glob
 
 def color_model(obj_file_path, labels_file_path, output_obj_file_path):
-    """Color a 3D model based on its segmentation labels, exactly matching colour_model_custom.py"""
-    # Define a base color mapping for labels other than 0 (RGB format, values in [0, 1])
-    # Exactly matching the original script's colors
+    # Defines a base color mapping for labels other than 0 (RGB format, values in [0, 1])
     label_colors = {
        1: (0.0, 1.0, 0.0),  # Green
        2: (0.0, 0.0, 1.0),  # Blue
@@ -37,11 +35,9 @@ def color_model(obj_file_path, labels_file_path, output_obj_file_path):
     # Step 3: Identify unconnected components for label 0 using NetworkX
     label_0_indices = [i for i, label in enumerate(labels) if label == 0]
 
-    # Create a graph
     G = nx.Graph()
     G.add_nodes_from(label_0_indices)
 
-    # Vectorized distance calculation
     threshold = 0.01  # Adjust this value if needed
     vertices_0 = vertices[label_0_indices]
 
@@ -64,7 +60,6 @@ def color_model(obj_file_path, labels_file_path, output_obj_file_path):
                 if i + k < j:  # Avoid duplicate edges and self-loops
                     G.add_edge(label_0_indices[i + k], label_0_indices[j])
 
-    # Find connected components
     connected_components = list(nx.connected_components(G))
 
     # Same get_component_metrics function as in the original script
@@ -101,11 +96,11 @@ def color_model(obj_file_path, labels_file_path, output_obj_file_path):
     # Create color mapping based on vertical position
     component_colors = {}
     for i, component_data in enumerate(sorted_components):
-        if i == 0:  # Top component
+        if i == 0:
             color = specific_colors['orange']
-        elif i in [1, 2]:  # Middle two components
+        elif i in [1, 2]:
             color = specific_colors['red']
-        else:  # Bottom components
+        else:
             color = specific_colors['teal']
         
         for vertex in component_data['component']:
@@ -129,21 +124,16 @@ def color_model(obj_file_path, labels_file_path, output_obj_file_path):
             parts = line.strip().split()
             x, y, z = parts[1:4]
             
-            # Get the corresponding label and its color
             label = labels[vertex_index]
             
             if label == 0:
-                # Use the color assigned to this specific component
                 r, g, b = component_colors.get(vertex_index, (1.0, 1.0, 1.0))  # Default to white
             else:
-                # Use the pre-defined label color
                 r, g, b = label_colors.get(label, (1.0, 1.0, 1.0))  # Default to white
             
-            # Write the vertex with color
             colored_lines.append(f"v {x} {y} {z} {r} {g} {b}\n")
             vertex_index += 1
         else:
-            # Keep other lines unchanged
             colored_lines.append(line)
 
     # Step 5: Write the new OBJ file

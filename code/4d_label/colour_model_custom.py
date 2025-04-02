@@ -31,21 +31,17 @@ for line in lines:
        parts = line.strip().split()
        vertices.append(tuple(map(float, parts[1:4])))
 
-# Convert to numpy array for faster operations
 vertices = np.array(vertices)
 
 # Step 3: Identify unconnected components for label 0 using NetworkX
 label_0_indices = [i for i, label in enumerate(labels) if label == 0]
 
-# Create a graph
 G = nx.Graph()
 G.add_nodes_from(label_0_indices)
 
-# Vectorized distance calculation
 threshold = 0.01  # Adjust this value if needed
 vertices_0 = vertices[label_0_indices]
 
-# Process edges in chunks to reduce memory usage
 chunk_size = 1000
 for i in range(0, len(label_0_indices), chunk_size):
    chunk_end = min(i + chunk_size, len(label_0_indices))
